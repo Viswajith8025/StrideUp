@@ -1,0 +1,30 @@
+{
+  "name": "StrideUp — Every Step. One Level Up.",
+  "short_name": "StrideUp",
+  "description": "StrideUp is a mobile-first step tracking and fitness challenge PWA that helps users track daily steps, set goals, maintain streaks, compete in challenges, and stay connected with their group.",
+  "start_url": "/home",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

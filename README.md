@@ -1,36 +1,126 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# StrideUp
 
-## Getting Started
+**Every Step. One Level Up.**
 
-First, run the development server:
+StrideUp is a mobile-first step tracking and fitness challenge PWA that helps users track their daily steps, set goals, monitor progress, maintain streaks, compete in challenges, view leaderboards, and stay connected with their group.
+
+## Features
+
+- User authentication (signup, login, password reset)
+- Daily step tracking with motion sensor support + manual entry + CSV import
+- Day / Week / Month statistics with charts
+- Challenges with leaderboards and invite links
+- Realtime challenge chat (Supabase Realtime)
+- Results and statistics
+- Theme switching (system/dark/light) and accent colors
+- Body measurements, units, notifications settings
+- CSV/JSON data import and export
+- Installable PWA with offline app shell
+- Admin panel for limited user base
+- Row Level Security on all tables
+
+## Prerequisites
+
+- Node.js 18+
+- A Supabase project
+
+## Setup
+
+### 1. Clone and install
+
+```bash
+cd stride-tracker
+npm install
+```
+
+### 2. Environment variables
+
+Copy `.env.example` to `.env.local`:
+
+```bash
+cp .env.example .env.local
+```
+
+Fill in your Supabase credentials:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_APP_NAME=StrideUp
+```
+
+### 3. Database setup
+
+1. Open your Supabase project → **SQL Editor**
+2. Paste and run `supabase/setup.sql`
+3. (Optional) Run `supabase/seed.sql` after creating test users
+
+### 4. Enable Realtime
+
+In Supabase Dashboard → Database → Replication, ensure `messages` table is enabled for Realtime.
+
+### 5. Run locally
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 6. Run tests
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm test
+```
 
-## Learn More
+## PWA Testing
 
-To learn more about Next.js, take a look at the following resources:
+1. Build for production: `npm run build && npm start`
+2. Open in Chrome on Android or Safari on iOS
+3. Use "Add to Home Screen" / "Install App"
+4. Verify offline app shell loads when disconnected
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Admin Access
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+After creating a user, promote them in Supabase SQL Editor:
 
-## Deploy on Vercel
+```sql
+UPDATE public.profiles SET role = 'admin' WHERE user_id = 'YOUR_USER_UUID';
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Project Structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+  app/           # Next.js App Router pages
+  components/    # UI components
+  hooks/         # React hooks
+  lib/           # Business logic & services
+  types/         # TypeScript types
+  utils/         # Date, formatting utilities
+supabase/
+  setup.sql      # Database schema + RLS
+  seed.sql       # Development seed data
+```
+
+## Step Tracking Notes
+
+Browser-based step counting uses `DeviceMotionEvent` when available. Due to OS/browser restrictions, background pedometer access is limited in PWAs. The app always supports:
+
+- **Manual step entry**
+- **CSV import**
+- **Motion sensor** (when permitted)
+
+Architecture is designed for future Health Connect / native integration.
+
+## What's Ready Without Supabase
+
+The app builds and runs locally. All UI, PWA shell, offline queue, import/export parsing, calculations, and tests work without a database. Auth, data persistence, challenges, and chat require Supabase credentials.
+
+## Deployment
+
+Deploy to Vercel, Netlify, or any Next.js-compatible host. Set environment variables in your hosting dashboard. Ensure `NEXT_PUBLIC_APP_URL` matches your production URL.
+
+## License
+
+Private — for limited user base.
