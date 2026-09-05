@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useChallenge } from "@/hooks/useChallenge";
 import { useAuth } from "@/hooks/useAuth";
 import { createClient } from "@/lib/supabase/client";
@@ -62,10 +63,13 @@ export default function ResultsPage() {
       {loading && <p className="text-muted">Loading…</p>}
 
       {!loading && results.length === 0 && (
-        <Card className="text-center py-12 text-muted text-sm">
-          <Trophy className="mx-auto mb-3 opacity-50" size={32} />
-          No challenge results yet. Join a challenge to see your progress.
-        </Card>
+        <EmptyState
+          icon={Trophy}
+          title="No results yet"
+          description="Join a challenge and finish a day of steps to see rankings here."
+          actionLabel="Browse challenges"
+          actionHref="/challenges"
+        />
       )}
 
       <div className="space-y-4">

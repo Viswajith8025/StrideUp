@@ -6,7 +6,7 @@ export const PARTNER_TAGLINE = "Your walking buddy";
 export const GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 /** Default Groq model — override with GROQ_MODEL in env */
-export const DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile";
+export const DEFAULT_GROQ_MODEL = "openai/gpt-oss-20b";
 
 export const PARTNER_SYSTEM_PROMPT = `You are ${PARTNER_NAME}, a warm, upbeat fitness buddy inside ${APP_NAME}.
 Talk like a supportive friend — short, natural messages (1–3 sentences). Use light encouragement, never lecture.

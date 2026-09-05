@@ -4,6 +4,7 @@ export interface ActivityProvider {
   start(): Promise<void>;
   stop(): void;
   onSteps(callback: (steps: number) => void): void;
+  isRunning?(): boolean;
 }
 
 export abstract class BaseActivityProvider implements ActivityProvider {
@@ -22,4 +23,9 @@ export abstract class BaseActivityProvider implements ActivityProvider {
   abstract isAvailable(): boolean;
   abstract start(): Promise<void>;
   abstract stop(): void;
+
+  /** Whether the provider successfully started (e.g. motion permission granted). */
+  isRunning(): boolean {
+    return this.running;
+  }
 }

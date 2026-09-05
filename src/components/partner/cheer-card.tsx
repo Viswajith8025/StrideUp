@@ -24,19 +24,28 @@ export function PartnerCheerCard({
   streakDays = 0,
 }: PartnerCheerCardProps) {
   const today = toLocalDateString();
-  const [message, setMessage] = useState<string | null>(() => loadCachedCheer(userId, today));
-  const [loading, setLoading] = useState(!message);
+  const [message, setMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const cached = loadCachedCheer(userId, today);
+    let cancelled = false;
+
     if (cached) {
-      setMessage(cached);
-      setLoading(false);
-      return;
+      const id = requestAnimationFrame(() => {
+        if (cancelled) return;
+        setMessage(cached);
+        setLoading(false);
+      });
+      return () => {
+        cancelled = true;
+        cancelAnimationFrame(id);
+      };
     }
 
-    let cancelled = false;
-    setLoading(true);
+    const loadingId = requestAnimationFrame(() => {
+      if (!cancelled) setLoading(true);
+    });
 
     fetch("/api/partner/cheer", {
       method: "POST",
@@ -68,6 +77,7 @@ export function PartnerCheerCard({
 
     return () => {
       cancelled = true;
+      cancelAnimationFrame(loadingId);
     };
   }, [userId, today, displayName, steps, goal, streakDays]);
 

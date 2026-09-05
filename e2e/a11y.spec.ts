@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
 const publicRoutes = ["/login", "/signup", "/privacy", "/terms", "/support", "/blocked"];
-const authedRoutes = ["/home", "/challenges", "/chats", "/results", "/notifications", "/settings", "/settings/profile"];
+const authedRoutes = ["/home", "/challenges", "/partner", "/results", "/notifications", "/settings", "/settings/profile"];
 
 test.describe("accessibility", () => {
   for (const route of publicRoutes) {

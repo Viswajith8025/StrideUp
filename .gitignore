@@ -23,6 +23,11 @@
 # misc
 .DS_Store
 *.pem
+.cursor/
+supabase/.temp/
+scripts/ui-observe/
+scripts/check-groq-env.mjs
+scripts/observe-ui.mjs
 
 # debug
 npm-debug.log*

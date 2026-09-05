@@ -13,6 +13,12 @@ import { useTheme } from "@/hooks/useTheme";
 import { APP_TAGLINE } from "@/lib/brand";
 import type { Profile } from "@/types/database";
 import { createClient } from "@/lib/supabase/client";
+import {
+  queryMotionPermission,
+  requestMotionPermission,
+  type MotionPermissionState,
+} from "@/lib/steps/providers/browser-motion";
+import { useEffect } from "react";
 
 function StepCounterForm({
   profile,
@@ -28,7 +34,25 @@ function StepCounterForm({
   const [height, setHeight] = useState(profile.height_cm?.toString() ?? "");
   const [stride, setStride] = useState(profile.stride_length_cm?.toString() ?? "");
   const [saving, setSaving] = useState(false);
+  const [motionPerm, setMotionPerm] = useState<MotionPermissionState>("unknown");
+  const [permBusy, setPermBusy] = useState(false);
   const supabase = createClient();
+
+  useEffect(() => {
+    void queryMotionPermission().then(setMotionPerm);
+  }, []);
+
+  const handleEnableMotion = async () => {
+    setPermBusy(true);
+    const state = await requestMotionPermission();
+    setMotionPerm(state);
+    setPermBusy(false);
+    if (state === "granted") {
+      toast("Motion access enabled for while this app is open.", "success");
+    } else if (state === "denied") {
+      toast("Motion denied — use manual step entry on Home.", "error");
+    }
+  };
 
   const handleComplete = async () => {
     setSaving(true);
@@ -63,7 +87,39 @@ function StepCounterForm({
         <label className="text-sm text-muted mb-1 block">Stride length (cm) — optional</label>
         <Input type="number" value={stride} onChange={(e) => setStride(e.target.value)} placeholder="Auto-estimated from height" />
       </div>
-      <p className="text-muted text-xs">Browser step counting uses motion sensors when available. Manual entry and import are always available as fallbacks.</p>
+
+      <div className="surface-raised rounded-2xl border border-border p-4 space-y-3">
+        <h3 className="text-sm font-semibold">Motion permission</h3>
+        <p className="text-xs text-muted leading-relaxed">
+          On iOS, motion access must be granted from a real tap. Status:{" "}
+          <strong className="text-foreground">{motionPerm}</strong>.
+        </p>
+        {(motionPerm === "prompt" || motionPerm === "unknown" || motionPerm === "denied") && (
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full pressable"
+            onClick={handleEnableMotion}
+            disabled={permBusy}
+          >
+            {permBusy ? "Requesting…" : motionPerm === "denied" ? "Try motion again" : "Enable motion (tap)"}
+          </Button>
+        )}
+        {motionPerm === "granted" && (
+          <p className="text-xs text-accent">Motion can run while StrideUp is open in the foreground.</p>
+        )}
+        {motionPerm === "denied" && (
+          <p className="text-xs text-muted">
+            Denied — use <strong className="text-foreground">Add steps</strong> on Home. You can also use Walk mode
+            after enabling motion in browser settings.
+          </p>
+        )}
+      </div>
+
+      <p className="text-muted text-xs">
+        Motion counting only works while this tab is open and permission is granted. Manual entry is the reliable path
+        on desktop and when motion is denied.
+      </p>
       <Button className="w-full" onClick={handleComplete} disabled={saving}>
         {saving ? "Saving…" : "Complete Setup"}
       </Button>
@@ -87,8 +143,30 @@ export default function StepCounterSetupPage() {
         <Link href="/settings"><ArrowLeft size={24} /></Link>
         <h1 className="text-xl font-bold">Setup Step Counter</h1>
       </header>
-      <p className="text-muted text-sm mb-2">{APP_TAGLINE}</p>
-      <p className="text-muted text-sm mb-6">Configure your step tracking preferences. You can always change these later.</p>
+      <p className="text-muted text-xs mb-1">{APP_TAGLINE}</p>
+      <p className="text-muted text-sm mb-4">Configure your goals. You can change these anytime in Settings.</p>
+
+      <div className="surface-raised rounded-2xl border border-border p-4 mb-6 space-y-3 text-sm">
+        <h2 className="font-semibold text-foreground">What the browser can do</h2>
+        <ul className="list-disc pl-5 space-y-2 text-muted leading-relaxed">
+          <li>
+            <strong className="text-foreground">While StrideUp is open:</strong> motion sensors can estimate steps
+            (iOS requires an explicit permission prompt from a tap).
+          </li>
+          <li>
+            <strong className="text-foreground">Not while closed or in the background:</strong> browsers cannot keep
+            counting steps like a native fitness app or watch. Gaps are never filled in.
+          </li>
+          <li>
+            <strong className="text-foreground">Walk mode:</strong> keeps the screen awake for a deliberate walk so
+            the sensor keeps firing.
+          </li>
+          <li>
+            <strong className="text-foreground">Always available:</strong> manual “Add steps” on Home.
+          </li>
+        </ul>
+      </div>
+
       <StepCounterForm key={profile.user_id} profile={profile} onComplete={handleComplete} />
     </AppShell>
   );

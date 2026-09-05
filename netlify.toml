@@ -1,0 +1,13 @@
+# StrideUp — Netlify
+#
+# NEXT_PUBLIC_* values are intentionally public (Next.js inlines them into the
+# client bundle). If those keys are marked as secrets in the Netlify UI, the
+# secrets scanner fails the build when it finds them in .next output.
+# Omit the public keys so real server secrets (e.g. GROQ_API_KEY) still scan.
+
+[build]
+  command = "npm run build"
+
+[build.environment]
+  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_APP_URL,NEXT_PUBLIC_APP_NAME,NEXT_PUBLIC_SUPABASE_ANON_KEY,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_VAPID_PUBLIC_KEY"
+  SECRETS_SCAN_OMIT_PATHS = ".next/**,.netlify/**"

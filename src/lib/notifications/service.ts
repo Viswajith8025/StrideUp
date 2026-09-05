@@ -38,7 +38,7 @@ export function inferUrlFromNotification(notification: Notification): string {
   if (notification.category === "push_challenge" || notification.category === "challenge") {
     return "/challenges";
   }
-  if (notification.category === "push_chat") return "/chats";
+  if (notification.category === "push_chat") return "/challenges";
   return "/home";
 }
 

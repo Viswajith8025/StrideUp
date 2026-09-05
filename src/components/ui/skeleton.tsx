@@ -15,5 +15,5 @@ export function PageLoader() {
 }
 
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse rounded-xl bg-card-elevated", className)} />;
+  return <div className={cn("skeleton-shimmer rounded-xl bg-card-elevated", className)} />;
 }

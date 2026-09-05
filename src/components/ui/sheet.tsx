@@ -20,19 +20,23 @@ export function Sheet({ open, onClose, title, children, className }: SheetProps)
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end bg-black/60"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 backdrop-blur-[2px]"
       onClick={onClose}
       role="presentation"
     >
       <div
         ref={panelRef}
-        className={cn("w-full rounded-t-2xl bg-card p-6 safe-bottom max-h-[80vh] overflow-y-auto", className)}
+        className={cn(
+          "sheet-panel surface-raised w-full max-w-[var(--app-max)] rounded-t-3xl p-6 safe-bottom max-h-[80vh] overflow-y-auto",
+          className
+        )}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? "sheet-title" : undefined}
         aria-label={title ? undefined : "Dialog"}
       >
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" aria-hidden />
         {title && (
           <h3 id="sheet-title" className="text-lg font-semibold mb-4">
             {title}

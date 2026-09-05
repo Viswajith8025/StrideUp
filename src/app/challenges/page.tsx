@@ -13,7 +13,9 @@ import { createChallenge } from "@/lib/challenges/service";
 import { challengeSchema } from "@/lib/validation/schemas";
 import { formatDisplayDate, remainingDays } from "@/utils/date";
 import { formatSteps } from "@/utils/formatting";
-import { Plus, Users } from "lucide-react";
+import { Plus, Users, Trophy } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Sheet } from "@/components/ui/sheet";
 
 function ChallengeCard({ challenge, memberCount }: { challenge: { id: string; name: string; description: string | null; start_date: string; end_date: string; step_goal: number; status: string }; memberCount?: number }) {
   return (
@@ -79,8 +81,8 @@ export default function ChallengesPage() {
   return (
     <AppShell>
       <header className="flex items-center justify-between py-4">
-        <h1 className="text-2xl font-bold">Challenges</h1>
-        <Button size="icon" onClick={() => setShowCreate(true)} aria-label="Create challenge">
+        <h1 className="text-2xl font-bold tracking-tight">Challenges</h1>
+        <Button size="icon" onClick={() => setShowCreate(true)} aria-label="Create challenge" className="pressable">
           <Plus size={20} />
         </Button>
       </header>
@@ -89,52 +91,61 @@ export default function ChallengesPage() {
       {loading && <p className="text-muted">Loading…</p>}
 
       <section className="space-y-4 mb-8">
-        <h2 className="text-sm text-muted uppercase tracking-wide">Active</h2>
+        <h2 className="section-title">Active</h2>
         {active.length === 0 ? (
-          <Card className="text-center text-muted text-sm py-8">
-            No active challenges. Create or join a challenge to get started.
-          </Card>
+          <EmptyState
+            icon={Trophy}
+            title="No active challenges"
+            description="Create a challenge or join a friend’s invite to compete."
+            actionLabel="Create challenge"
+            onAction={() => setShowCreate(true)}
+          />
         ) : (
           active.map((c) => <ChallengeCard key={c.id} challenge={c} />)
         )}
       </section>
 
       <section className="space-y-4 mb-8">
-        <h2 className="text-sm text-muted uppercase tracking-wide">Upcoming</h2>
+        <h2 className="section-title">Upcoming</h2>
         {upcoming.length === 0 ? (
-          <p className="text-muted text-sm">No upcoming challenges</p>
+          <EmptyState
+            icon={Trophy}
+            title="Nothing upcoming"
+            description="Schedule a challenge with a future start date."
+            className="py-8"
+          />
         ) : (
           upcoming.map((c) => <ChallengeCard key={c.id} challenge={c} />)
         )}
       </section>
 
       <section className="space-y-4 mb-8">
-        <h2 className="text-sm text-muted uppercase tracking-wide">Completed</h2>
+        <h2 className="section-title">Completed</h2>
         {completed.length === 0 ? (
-          <p className="text-muted text-sm">No completed challenges yet</p>
+          <EmptyState
+            icon={Trophy}
+            title="No completed challenges"
+            description="Finished challenges will land here with your results."
+            className="py-8"
+          />
         ) : (
           completed.map((c) => <ChallengeCard key={c.id} challenge={c} />)
         )}
       </section>
 
-      {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-end bg-black/60" onClick={() => setShowCreate(false)}>
-          <div className="w-full max-h-[80vh] overflow-y-auto rounded-t-2xl bg-card p-6 safe-bottom" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold mb-4">Create Challenge</h3>
-            <div className="space-y-3">
-              <Input placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-              <Input placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-              <Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
-              <Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
-              <Input type="number" placeholder="Step goal" value={form.step_goal} onChange={(e) => setForm({ ...form, step_goal: e.target.value })} />
-              {createError && <p className="text-red-400 text-sm">{createError}</p>}
-              <Button className="w-full" onClick={handleCreate} disabled={creating}>
-                {creating ? "Creating…" : "Create"}
-              </Button>
-            </div>
-          </div>
+      <Sheet open={showCreate} onClose={() => setShowCreate(false)} title="Create Challenge">
+        <div className="space-y-3">
+          <Input placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          <Input placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+          <Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
+          <Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
+          <Input type="number" placeholder="Step goal" value={form.step_goal} onChange={(e) => setForm({ ...form, step_goal: e.target.value })} />
+          {createError && <p className="text-red-400 text-sm">{createError}</p>}
+          <Button className="w-full pressable" onClick={handleCreate} disabled={creating}>
+            {creating ? "Creating…" : "Create"}
+          </Button>
         </div>
-      )}
+      </Sheet>
     </AppShell>
   );
 }

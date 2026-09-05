@@ -181,6 +181,12 @@ export default function SettingsPage() {
       <p className="text-muted text-xs uppercase tracking-wide mb-2">General</p>
       <div className="mb-6 divide-y divide-border">
         <SettingsRow icon={Lightbulb} label="Setup Step Counter" href="/settings/step-counter" />
+        <SettingsRow
+          icon={Footprints}
+          label="Motion debug"
+          subtitle="Record sensor traces"
+          href="/settings/motion-debug"
+        />
         <SettingsRow icon={SlidersHorizontal} label="General" href="/settings/general" />
         <SettingsRow icon={User} label="Body Measurements" href="/settings/body" />
         <SettingsRow icon={User} label="Profile" href="/settings/profile" />

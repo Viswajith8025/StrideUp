@@ -1,6 +1,8 @@
 "use client";
 
+import { Activity } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
+import { EmptyState } from "@/components/ui/empty-state";
 import { formatTimeAgo } from "@/utils/date";
 import type { ChallengeActivityEvent } from "@/types/database";
 
@@ -26,7 +28,14 @@ function describeEvent(event: ChallengeActivityEvent): string {
 
 export function ChallengeActivityFeed({ events }: ChallengeActivityFeedProps) {
   if (!events.length) {
-    return <p className="text-muted text-sm text-center py-4">No activity yet</p>;
+    return (
+      <EmptyState
+        icon={Activity}
+        title="No activity yet"
+        description="Joins, goal hits, and cheers will show up here."
+        className="border-0 bg-transparent shadow-none py-8"
+      />
+    );
   }
 
   return (

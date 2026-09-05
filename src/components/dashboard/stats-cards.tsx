@@ -1,6 +1,7 @@
 "use client";
 
-import { Star, Carrot } from "lucide-react";
+import { MapPin, Timer, Flame } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface StatsRowProps {
   calories: number;
@@ -9,27 +10,41 @@ interface StatsRowProps {
   activeMinutes: number;
 }
 
+function StatCard({
+  icon: Icon,
+  value,
+  label,
+  className,
+}: {
+  icon: typeof MapPin;
+  value: string | number;
+  label: string;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "surface-raised flex min-w-0 flex-1 flex-col gap-2 rounded-2xl px-3 py-3.5",
+        className
+      )}
+    >
+      <Icon size={16} strokeWidth={1.75} className="text-muted" aria-hidden />
+      <div className="text-xl font-semibold tabular-nums tracking-tight text-foreground truncate">
+        {value}
+      </div>
+      <div className="text-[11px] font-medium uppercase tracking-wide text-muted truncate">
+        {label}
+      </div>
+    </div>
+  );
+}
+
 export function StatsRow({ calories, distance, distanceUnit, activeMinutes }: StatsRowProps) {
   return (
-    <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
-      <div className="flex-shrink-0 rounded-2xl bg-card px-5 py-4 min-w-[5.5rem]">
-        <div className="text-2xl font-bold tabular-nums">{calories}</div>
-        <div className="text-muted text-xs">kcal</div>
-      </div>
-      <div className="flex-shrink-0 rounded-2xl bg-card px-5 py-4 min-w-[5.5rem]">
-        <Star size={14} className="text-accent mb-1" />
-        <div className="text-2xl font-bold tabular-nums">{distance}</div>
-        <div className="text-muted text-xs">{distanceUnit}</div>
-      </div>
-      <div className="flex-shrink-0 rounded-2xl bg-card px-5 py-4 min-w-[5.5rem]">
-        <Star size={14} className="text-accent mb-1" />
-        <div className="text-2xl font-bold tabular-nums">{activeMinutes}</div>
-        <div className="text-muted text-xs">min</div>
-      </div>
-      <div className="flex-shrink-0 rounded-2xl bg-card px-5 py-4 min-w-[5.5rem]">
-        <Carrot size={16} className="text-orange-300 mb-2" />
-        <div className="text-muted text-xs">Calori…</div>
-      </div>
+    <div className="grid grid-cols-3 gap-2.5">
+      <StatCard icon={MapPin} value={distance} label={distanceUnit} />
+      <StatCard icon={Timer} value={activeMinutes} label="Active min" />
+      <StatCard icon={Flame} value={calories} label="kcal" />
     </div>
   );
 }

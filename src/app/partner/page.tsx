@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, Sparkles, Trash2 } from "lucide-react";
+import { Sparkles, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,19 +43,19 @@ export default function PartnerPage() {
   useEffect(() => {
     if (!user) return;
     const stored = loadPartnerMessages(user.id);
-    if (stored.length === 0) {
-      const welcome: PartnerChatMessage = {
-        id: newId(),
-        role: "assistant",
-        content: `Hey ${profile?.display_name ?? "friend"} — I'm ${PARTNER_NAME}, your walking buddy. Tell me how the day's going, or ask for a cheer anytime.`,
-        createdAt: new Date().toISOString(),
-      };
-      setMessages([welcome]);
-      savePartnerMessages(user.id, [welcome]);
-    } else {
-      setMessages(stored);
-    }
-    setReady(true);
+    const welcome: PartnerChatMessage = {
+      id: newId(),
+      role: "assistant",
+      content: `Hey ${profile?.display_name ?? "friend"} — I'm ${PARTNER_NAME}, your walking buddy. Tell me how the day's going, or ask for a cheer anytime.`,
+      createdAt: new Date().toISOString(),
+    };
+    const next = stored.length === 0 ? [welcome] : stored;
+    if (stored.length === 0) savePartnerMessages(user.id, next);
+    const id = requestAnimationFrame(() => {
+      setMessages(next);
+      setReady(true);
+    });
+    return () => cancelAnimationFrame(id);
   }, [user, profile?.display_name]);
 
   useEffect(() => {
@@ -138,11 +137,10 @@ export default function PartnerPage() {
   };
 
   return (
-    <AppShell showNav={false}>
+    <AppShell>
       <header className="flex items-center gap-3 py-4 border-b border-border">
-        <Link href="/chats" aria-label="Back to chats"><ArrowLeft size={24} /></Link>
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/20">
-          <Sparkles className="text-accent" size={18} />
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15">
+          <Sparkles className="text-accent" size={18} strokeWidth={1.75} />
         </div>
         <div className="flex-1 min-w-0">
           <h1 className="text-lg font-semibold truncate">{PARTNER_NAME}</h1>
@@ -151,10 +149,10 @@ export default function PartnerPage() {
         <button
           type="button"
           onClick={handleClear}
-          className="p-2 text-muted hover:text-foreground"
+          className="pressable p-2 text-muted hover:text-foreground"
           aria-label="Clear chat"
         >
-          <Trash2 size={18} />
+          <Trash2 size={18} strokeWidth={1.75} />
         </button>
       </header>
 

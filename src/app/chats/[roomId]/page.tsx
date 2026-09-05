@@ -7,11 +7,12 @@ import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar } from "@/components/ui/avatar";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useRealtimeChat } from "@/hooks/useRealtimeChat";
 import { useAuth } from "@/hooks/useAuth";
 import { messageSchema } from "@/lib/validation/schemas";
 import { formatTimeAgo } from "@/utils/date";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, MessageCircle } from "lucide-react";
 
 export default function ChatRoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -46,7 +47,7 @@ export default function ChatRoomPage() {
   return (
     <AppShell showNav={false}>
       <header className="flex items-center gap-3 py-4 border-b border-border">
-        <Link href="/chats"><ArrowLeft size={24} /></Link>
+        <Link href="/challenges"><ArrowLeft size={24} /></Link>
         <h1 className="text-lg font-semibold">Chat</h1>
       </header>
 
@@ -55,7 +56,12 @@ export default function ChatRoomPage() {
           {loading && <p className="text-muted text-center">Loading messages…</p>}
           {error && <p className="text-red-400 text-center text-sm">{error}</p>}
           {!loading && messages.length === 0 && (
-            <p className="text-muted text-center text-sm py-8">No messages yet. Say hello!</p>
+            <EmptyState
+              icon={MessageCircle}
+              title="No messages yet"
+              description="Say hello and get the conversation started."
+              className="py-8"
+            />
           )}
           {messages.map((msg) => {
             const isMe = msg.user_id === user?.id;

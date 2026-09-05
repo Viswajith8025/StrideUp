@@ -16,14 +16,21 @@ export async function callGroqChat(params: {
   temperature?: number;
   maxTokens?: number;
 }): Promise<string> {
-  const apiKey = process.env.GROQ_API_KEY;
+  let apiKey = process.env.GROQ_API_KEY?.trim() ?? "";
+  if (
+    (apiKey.startsWith('"') && apiKey.endsWith('"')) ||
+    (apiKey.startsWith("'") && apiKey.endsWith("'"))
+  ) {
+    apiKey = apiKey.slice(1, -1).trim();
+  }
+
   if (!apiKey || apiKey === "your-groq-api-key") {
     throw new PartnerConfigError(
       "GROQ_API_KEY is not set. Add your Groq key to .env.local and restart the app."
     );
   }
 
-  const model = process.env.GROQ_MODEL || DEFAULT_GROQ_MODEL;
+  const model = (process.env.GROQ_MODEL || DEFAULT_GROQ_MODEL).trim();
 
   const response = await fetch(GROQ_CHAT_URL, {
     method: "POST",
@@ -41,6 +48,11 @@ export async function callGroqChat(params: {
 
   if (!response.ok) {
     const body = await response.text().catch(() => "");
+    if (response.status === 401) {
+      throw new PartnerConfigError(
+        "Groq rejected the API key (401). Check GROQ_API_KEY in .env.local — no quotes/spaces — then fully restart npm run dev."
+      );
+    }
     throw new Error(`Groq request failed (${response.status}): ${body.slice(0, 200)}`);
   }
 

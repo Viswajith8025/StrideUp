@@ -1,18 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Footprints } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
-import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { getDayLabel, isToday } from "@/utils/date";
+import { MOTION } from "@/lib/motion/tokens";
+import { cn } from "@/lib/utils";
 
 interface ActivityChartProps {
   data: { date: string; steps: number }[];
   goal?: number;
+  onAddSteps?: () => void;
 }
 
-export function ActivityChart({ data, goal }: ActivityChartProps) {
+export function ActivityChart({ data, goal, onAddSteps }: ActivityChartProps) {
   const [showTable, setShowTable] = useState(false);
+  const [revealKey, setRevealKey] = useState<string | null>(null);
   const chartData = data.map((d) => ({
     ...d,
     label: getDayLabel(d.date).slice(0, 3),
@@ -20,11 +25,31 @@ export function ActivityChart({ data, goal }: ActivityChartProps) {
   }));
 
   const summary = chartData.reduce((sum, row) => sum + row.steps, 0);
+  const hasData = summary > 0;
+  const chartKey = chartData.map((d) => `${d.date}:${d.steps}`).join("|");
+  const drawn = revealKey === chartKey;
+
+  useEffect(() => {
+    const id = window.setTimeout(() => setRevealKey(chartKey), 16);
+    return () => clearTimeout(id);
+  }, [chartKey]);
+
+  if (!hasData) {
+    return (
+      <EmptyState
+        icon={Footprints}
+        title="No activity yet"
+        description="Log today’s steps to see your chart fill in."
+        actionLabel="Add today’s steps"
+        onAction={onAddSteps}
+      />
+    );
+  }
 
   return (
-    <Card className="p-4">
+    <div className="surface-raised rounded-2xl p-4">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="text-sm font-medium">Activity chart</h3>
+        <h3 className="section-title">Activity</h3>
         <Button
           type="button"
           variant="outline"
@@ -38,7 +63,11 @@ export function ActivityChart({ data, goal }: ActivityChartProps) {
       </div>
 
       <div
-        className="h-40 w-full"
+        className={cn(
+          "h-40 w-full transition-opacity duration-[var(--motion-standard)] ease-[var(--ease-out)]",
+          drawn ? "opacity-100" : "opacity-0"
+        )}
+        style={{ transitionDuration: `${MOTION.standard}ms` }}
         role="img"
         aria-label={`Step activity chart. ${chartData.length} days shown, ${summary.toLocaleString()} total steps.`}
         hidden={showTable}
@@ -72,7 +101,11 @@ export function ActivityChart({ data, goal }: ActivityChartProps) {
             />
             <YAxis hide domain={[0, "auto"]} />
             <Tooltip
-              contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }}
+              contentStyle={{
+                background: "var(--card)",
+                border: "1px solid var(--border)",
+                borderRadius: 8,
+              }}
               labelStyle={{ color: "var(--foreground)" }}
               formatter={(value) => [Number(value ?? 0).toLocaleString(), "Steps"]}
             />
@@ -84,6 +117,8 @@ export function ActivityChart({ data, goal }: ActivityChartProps) {
                 strokeDasharray="4 4"
                 dot={false}
                 strokeWidth={1}
+                isAnimationActive={drawn}
+                animationDuration={MOTION.emphasis}
               />
             )}
             <Line
@@ -91,11 +126,22 @@ export function ActivityChart({ data, goal }: ActivityChartProps) {
               dataKey="steps"
               stroke="var(--accent)"
               strokeWidth={2.5}
+              isAnimationActive={drawn}
+              animationDuration={MOTION.emphasis}
+              animationEasing="ease-out"
               dot={({ cx, cy, index }) => {
                 const item = chartData[index];
                 if (!item?.isCurrent) return <circle key={index} cx={cx} cy={cy} r={0} />;
                 return (
-                  <circle key={index} cx={cx} cy={cy} r={6} fill="var(--accent)" stroke="var(--background)" strokeWidth={2} />
+                  <circle
+                    key={index}
+                    cx={cx}
+                    cy={cy}
+                    r={6}
+                    fill="var(--accent)"
+                    stroke="var(--background)"
+                    strokeWidth={2}
+                  />
                 );
               }}
               activeDot={{ r: 5, fill: "var(--accent)" }}
@@ -110,8 +156,12 @@ export function ActivityChart({ data, goal }: ActivityChartProps) {
             <caption className="sr-only">Daily step counts for the selected period</caption>
             <thead>
               <tr className="border-b border-border text-left text-muted">
-                <th scope="col" className="py-2 pr-4">Date</th>
-                <th scope="col" className="py-2">Steps</th>
+                <th scope="col" className="py-2 pr-4">
+                  Date
+                </th>
+                <th scope="col" className="py-2">
+                  Steps
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -125,6 +175,6 @@ export function ActivityChart({ data, goal }: ActivityChartProps) {
           </table>
         </div>
       )}
-    </Card>
+    </div>
   );
 }
