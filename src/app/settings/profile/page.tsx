@@ -6,7 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Avatar } from "@/components/ui/avatar";
+import { AvatarUpload } from "@/components/profile/avatar-upload";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/hooks/useAuth";
 import { createClient } from "@/lib/supabase/client";
@@ -15,11 +15,15 @@ export default function ProfileSettingsPage() {
   const { profile, refreshProfile } = useAuth();
   const { toast } = useToast();
   const [displayName, setDisplayName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
-    if (profile) setDisplayName(profile.display_name);
+    if (profile) {
+      setDisplayName(profile.display_name);
+      setAvatarUrl(profile.avatar_url);
+    }
   }, [profile]);
 
   const handleSave = async () => {
@@ -31,6 +35,8 @@ export default function ProfileSettingsPage() {
     toast("Profile updated", "success");
   };
 
+  if (!profile) return null;
+
   return (
     <AppShell showNav={false}>
       <header className="flex items-center gap-3 py-4">
@@ -38,7 +44,15 @@ export default function ProfileSettingsPage() {
         <h1 className="text-xl font-bold">Profile</h1>
       </header>
       <div className="flex flex-col items-center mb-8">
-        <Avatar name={displayName || "User"} src={profile?.avatar_url} size="lg" />
+        <AvatarUpload
+          userId={profile.user_id}
+          displayName={displayName || "User"}
+          avatarUrl={avatarUrl}
+          onUploaded={(url) => {
+            setAvatarUrl(url);
+            refreshProfile();
+          }}
+        />
       </div>
       <div className="space-y-4">
         <div>

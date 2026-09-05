@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { AVATAR_ALLOWED_MIME_TYPES, AVATAR_MAX_BYTES } from "@/lib/avatars/constants";
 
 export const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -43,6 +44,16 @@ export const importRowSchema = z.object({
   calories: z.number().int().min(0).optional(),
   active_minutes: z.number().int().min(0).optional(),
 });
+
+export const avatarUploadFileSchema = z
+  .instanceof(File, { message: "Invalid file" })
+  .refine((file) => file.size <= AVATAR_MAX_BYTES, {
+    message: "Image must be 2MB or smaller",
+  })
+  .refine(
+    (file) => (AVATAR_ALLOWED_MIME_TYPES as readonly string[]).includes(file.type),
+    { message: "Unsupported image type" }
+  );
 
 export type LoginInput = z.infer<typeof loginSchema>;
 export type SignupInput = z.infer<typeof signupSchema>;

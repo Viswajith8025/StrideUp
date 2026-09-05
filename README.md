@@ -29,7 +29,7 @@ StrideUp is a mobile-first step tracking and fitness challenge PWA that helps us
 ### 1. Clone and install
 
 ```bash
-cd stride-tracker
+cd StrideUp
 npm install
 ```
 
@@ -99,8 +99,9 @@ src/
   types/         # TypeScript types
   utils/         # Date, formatting utilities
 supabase/
-  setup.sql      # Database schema + RLS
-  seed.sql       # Development seed data
+  migrations/    # Timestamped SQL per phase (source of truth)
+  setup.sql      # Generated full schema — run scripts/generate-setup-sql.mjs after edits
+  seed.sql       # Development / E2E seed notes
 ```
 
 ## Step Tracking Notes

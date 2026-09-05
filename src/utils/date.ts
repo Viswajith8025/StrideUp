@@ -2,6 +2,34 @@ import { format, parseISO, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eac
 
 export { subDays, addDays };
 
+export function getDeviceTimezone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  } catch {
+    return "UTC";
+  }
+}
+
+/** Resolve YYYY-MM-DD for an instant in an IANA timezone. */
+export function toDateStringInTimezone(date: Date, timezone: string): string {
+  const tz = timezone?.trim() || "UTC";
+  try {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(date);
+  } catch {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: "UTC",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(date);
+  }
+}
+
 /** Get local date string YYYY-MM-DD */
 export function toLocalDateString(date: Date = new Date()): string {
   const y = date.getFullYear();
@@ -13,6 +41,14 @@ export function toLocalDateString(date: Date = new Date()): string {
 export function parseLocalDate(dateStr: string): Date {
   const [y, m, d] = dateStr.split("-").map(Number);
   return new Date(y, m - 1, d);
+}
+
+/** Calendar arithmetic on YYYY-MM-DD strings (timezone-neutral). */
+export function subtractDaysFromDateString(dateStr: string, days: number): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  date.setUTCDate(date.getUTCDate() - days);
+  return date.toISOString().slice(0, 10);
 }
 
 export function formatDisplayDate(dateStr: string, pattern = "MMM d"): string {

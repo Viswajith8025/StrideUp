@@ -4,12 +4,17 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { BrowserMotionProvider } from "@/lib/steps/providers/browser-motion";
 import { createClient } from "@/lib/supabase/client";
 import { addSteps, recordStepEvent } from "@/lib/steps/service";
-import { syncChallengeSteps } from "@/lib/challenges/service";
 import { queueActivityUpdate, flushPendingUpdates, getPendingStepsTotal } from "@/lib/offline/sync";
 import { toLocalDateString } from "@/utils/date";
-import type { Profile } from "@/types/database";
+import type { DailyActivity, Profile } from "@/types/database";
 
-export function useSteps(profile: Profile | null, activeChallengeIds: string[] = []) {
+export interface UseStepsOptions {
+  initialTodayActivity?: DailyActivity | null;
+  onStepsSynced?: () => void | Promise<void>;
+}
+
+export function useSteps(profile: Profile | null, options: UseStepsOptions = {}) {
+  const { onStepsSynced } = options;
   const [syncing, setSyncing] = useState(false);
   const [motionAvailable, setMotionAvailable] = useState(false);
   const [pendingSteps, setPendingSteps] = useState(0);
@@ -29,21 +34,14 @@ export function useSteps(profile: Profile | null, activeChallengeIds: string[] =
     setPendingSteps(total);
   }, [profile]);
 
-  const syncToChallenges = useCallback(async (steps: number) => {
-    const today = toLocalDateString();
-    for (const challengeId of activeChallengeIds) {
-      await syncChallengeSteps(supabase, profile!.user_id, challengeId, today, steps);
-    }
-  }, [activeChallengeIds, profile, supabase]);
-
   const flushSteps = useCallback(async (count: number, source: "manual" | "motion") => {
     if (!profile || count <= 0) return;
     setSyncing(true);
     try {
       await addSteps(supabase, profile.user_id, profile, count, source);
       await recordStepEvent(supabase, profile.user_id, count, source);
-      await syncToChallenges(count);
       await refreshPending();
+      await onStepsSynced?.();
     } catch (e) {
       console.error("Failed to sync steps:", e);
       await queueActivityUpdate({
@@ -56,7 +54,7 @@ export function useSteps(profile: Profile | null, activeChallengeIds: string[] =
     } finally {
       setSyncing(false);
     }
-  }, [profile, supabase, syncToChallenges, refreshPending]);
+  }, [profile, supabase, refreshPending, onStepsSynced]);
 
   useEffect(() => {
     if (!profile) return;
@@ -74,13 +72,16 @@ export function useSteps(profile: Profile | null, activeChallengeIds: string[] =
     if (!profile) return;
 
     const tryFlush = () => {
-      flushPendingUpdates(supabase, profile, activeChallengeIds).then(refreshPending);
+      flushPendingUpdates(supabase, profile).then(async () => {
+        await refreshPending();
+        await onStepsSynced?.();
+      });
     };
 
     tryFlush();
     window.addEventListener("online", tryFlush);
     return () => window.removeEventListener("online", tryFlush);
-  }, [profile, activeChallengeIds, supabase, refreshPending]);
+  }, [profile, supabase, refreshPending, onStepsSynced]);
 
   const addManualSteps = useCallback(async (count: number) => {
     await flushSteps(count, "manual");

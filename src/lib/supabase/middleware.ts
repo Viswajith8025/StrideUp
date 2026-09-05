@@ -1,7 +1,18 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_ROUTES = ["/login", "/signup", "/forgot-password", "/invite", "/privacy", "/terms", "/support"];
+const PUBLIC_ROUTES = [
+  "/login",
+  "/signup",
+  "/forgot-password",
+  "/invite",
+  "/privacy",
+  "/terms",
+  "/support",
+  "/blocked",
+];
+
+const BLOCKED_ROUTE = "/blocked";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -35,6 +46,28 @@ export async function updateSession(request: NextRequest) {
     url.pathname = "/login";
     url.searchParams.set("redirect", pathname);
     return NextResponse.redirect(url);
+  }
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_active")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    const isActive = profile?.is_active ?? true;
+
+    if (!isActive && pathname !== BLOCKED_ROUTE) {
+      const url = request.nextUrl.clone();
+      url.pathname = BLOCKED_ROUTE;
+      return NextResponse.redirect(url);
+    }
+
+    if (isActive && pathname === BLOCKED_ROUTE) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/home";
+      return NextResponse.redirect(url);
+    }
   }
 
   if (user && isAuthRoute) {

@@ -1,5 +1,5 @@
 import type { DailyActivity } from "@/types/database";
-import { getDaysInRange } from "@/utils/date";
+import { getDaysInRange, subtractDaysFromDateString } from "@/utils/date";
 
 const DEFAULT_STRIDE_CM = 76;
 const HEIGHT_STRIDE_RATIO = 0.415;
@@ -59,30 +59,76 @@ export function calculateGoalPercentage(steps: number, goal: number): number {
   return Math.min(100, (steps / goal) * 100);
 }
 
+function stepsMetGoal(byDate: Map<string, number>, dateStr: string, goal: number): boolean {
+  return (byDate.get(dateStr) ?? 0) >= goal;
+}
+
+/**
+ * Current streak in the user's local calendar (caller supplies todayStr from toDateStringInTimezone).
+ * If today is incomplete, the streak holds from yesterday without incrementing.
+ */
 export function calculateDailyStreak(
   activities: DailyActivity[],
   goal: number,
   todayStr: string
 ): number {
   const byDate = new Map(activities.map((a) => [a.date, a.steps]));
-  let streak = 0;
-  const current = new Date(
-    parseInt(todayStr.slice(0, 4)),
-    parseInt(todayStr.slice(5, 7)) - 1,
-    parseInt(todayStr.slice(8, 10))
-  );
+  let cursor = todayStr;
 
-  while (true) {
-    const dateStr = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, "0")}-${String(current.getDate()).padStart(2, "0")}`;
-    const steps = byDate.get(dateStr) ?? 0;
-    if (steps >= goal) {
-      streak++;
-      current.setDate(current.getDate() - 1);
-    } else {
-      break;
-    }
+  if (!stepsMetGoal(byDate, todayStr, goal)) {
+    cursor = subtractDaysFromDateString(todayStr, 1);
+  }
+
+  let streak = 0;
+  while (stepsMetGoal(byDate, cursor, goal)) {
+    streak++;
+    cursor = subtractDaysFromDateString(cursor, 1);
   }
   return streak;
+}
+
+/** Longest consecutive goal-hit run within [rangeStart, rangeEnd] (inclusive). */
+export function calculateLongestStreak(
+  activities: DailyActivity[],
+  goal: number,
+  rangeStart: string,
+  rangeEnd: string
+): number {
+  const byDate = new Map(activities.map((a) => [a.date, a.steps]));
+  const days = getDaysInRange(rangeStart, rangeEnd);
+
+  let longest = 0;
+  let current = 0;
+  for (const date of days) {
+    if (stepsMetGoal(byDate, date, goal)) {
+      current++;
+      longest = Math.max(longest, current);
+    } else {
+      current = 0;
+    }
+  }
+  return longest;
+}
+
+export interface GoalHitDay {
+  date: string;
+  hit: boolean;
+}
+
+/** Last N calendar days ending at endDate (oldest first). */
+export function getGoalHitMap(
+  activities: DailyActivity[],
+  goal: number,
+  endDate: string,
+  days = 7
+): GoalHitDay[] {
+  const byDate = new Map(activities.map((a) => [a.date, a.steps]));
+  const result: GoalHitDay[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const date = subtractDaysFromDateString(endDate, i);
+    result.push({ date, hit: stepsMetGoal(byDate, date, goal) });
+  }
+  return result;
 }
 
 export interface WeeklyStats {

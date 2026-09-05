@@ -111,7 +111,7 @@ export default function ChallengeDetailPage() {
       <Card className="mb-6 space-y-3">
         {leaderboard.map((entry) => (
           <div key={entry.user_id} className="flex items-center gap-3">
-            <span className="text-muted w-6 font-medium">#{entry.rank}</span>
+            <span className="text-muted w-6 font-medium" data-testid="leaderboard-rank">#{entry.rank}</span>
             <Avatar name={entry.display_name} src={entry.avatar_url} size="sm" />
             <span className="flex-1 font-medium">{entry.display_name}</span>
             <span className="font-bold tabular-nums">{formatSteps(entry.total_steps)}</span>

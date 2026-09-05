@@ -1,14 +1,44 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { Message } from "@/types/database";
+import type { Message, Profile } from "@/types/database";
+
+type ProfileSnippet = Pick<Profile, "display_name" | "avatar_url">;
 
 export function useRealtimeChat(roomId: string | null) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const profileCacheRef = useRef<Map<string, ProfileSnippet>>(new Map());
   const supabase = createClient();
+
+  const attachProfiles = useCallback(
+    async (rows: Message[]): Promise<Message[]> => {
+      const missing = [...new Set(rows.map((row) => row.user_id))].filter(
+        (id) => !profileCacheRef.current.has(id)
+      );
+
+      if (missing.length) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, display_name, avatar_url")
+          .in("user_id", missing);
+        for (const profile of profiles ?? []) {
+          profileCacheRef.current.set(profile.user_id, {
+            display_name: profile.display_name,
+            avatar_url: profile.avatar_url,
+          });
+        }
+      }
+
+      return rows.map((row) => ({
+        ...row,
+        profile: profileCacheRef.current.get(row.user_id) ?? undefined,
+      }));
+    },
+    [supabase]
+  );
 
   const fetchMessages = useCallback(async () => {
     if (!roomId) return;
@@ -24,19 +54,10 @@ export function useRealtimeChat(roomId: string | null) {
     if (err) {
       setError(err.message);
     } else {
-      const enriched: Message[] = [];
-      for (const msg of data ?? []) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("display_name, avatar_url")
-          .eq("user_id", msg.user_id)
-          .single();
-        enriched.push({ ...(msg as Message), profile: profile ?? undefined });
-      }
-      setMessages(enriched);
+      setMessages(await attachProfiles((data ?? []) as Message[]));
     }
     setLoading(false);
-  }, [roomId, supabase]);
+  }, [attachProfiles, roomId, supabase]);
 
   useEffect(() => {
     fetchMessages();
@@ -51,15 +72,8 @@ export function useRealtimeChat(roomId: string | null) {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages", filter: `room_id=eq.${roomId}` },
         async (payload) => {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("display_name, avatar_url")
-            .eq("user_id", payload.new.user_id)
-            .single();
-          setMessages((prev) => [
-            ...prev,
-            { ...(payload.new as Message), profile: profile ?? undefined },
-          ]);
+          const enriched = await attachProfiles([payload.new as Message]);
+          setMessages((prev) => [...prev, enriched[0]]);
         }
       )
       .subscribe();
@@ -67,7 +81,7 @@ export function useRealtimeChat(roomId: string | null) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [roomId, supabase]);
+  }, [attachProfiles, roomId, supabase]);
 
   const sendMessage = async (text: string, userId: string) => {
     if (!roomId) return;

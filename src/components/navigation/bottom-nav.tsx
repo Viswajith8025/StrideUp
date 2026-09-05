@@ -19,33 +19,35 @@ export function BottomNav({ unreadCount = 0 }: { unreadCount?: number }) {
     <nav
       className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur-md safe-bottom"
       aria-label="Main navigation"
+      role="navigation"
     >
-      <div className="mx-auto flex max-w-lg items-center justify-around px-2" style={{ height: "var(--nav-height)" }}>
+      <ul className="mx-auto flex max-w-lg list-none items-center justify-around px-2 m-0 p-0" style={{ height: "var(--nav-height)" }}>
         {navItems.map(({ href, label, icon: Icon, badge }) => {
           const active = pathname.startsWith(href);
           return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                "flex flex-col items-center gap-1 px-4 py-2 min-w-[4rem] transition-colors",
-                active ? "text-accent" : "text-muted"
-              )}
-              aria-current={active ? "page" : undefined}
-            >
-              <span className="relative">
-                <Icon size={24} strokeWidth={active ? 2.5 : 2} />
-                {badge && unreadCount > 0 && (
-                  <span className="absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
+            <li key={href} className="flex-1">
+              <Link
+                href={href}
+                className={cn(
+                  "flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 px-3 py-2 transition-colors",
+                  active ? "text-accent" : "text-muted"
                 )}
-              </span>
-              <span className="text-[10px] font-medium">{label}</span>
-            </Link>
+                aria-current={active ? "page" : undefined}
+              >
+                <span className="relative" aria-hidden="true">
+                  <Icon size={24} strokeWidth={active ? 2.5 : 2} />
+                  {badge && unreadCount > 0 && (
+                    <span className="absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </span>
+                <span className="text-[10px] font-medium">{label}</span>
+              </Link>
+            </li>
           );
         })}
-      </div>
+      </ul>
     </nav>
   );
 }

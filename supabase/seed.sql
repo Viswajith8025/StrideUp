@@ -1,12 +1,18 @@
 -- =============================================================================
 -- StrideUp — Development Seed Data
 -- =============================================================================
--- Run AFTER setup.sql and AFTER creating test users via Supabase Auth.
--- Replace USER_ID_1, USER_ID_2, USER_ID_3 with actual auth.users UUIDs.
+-- Run AFTER migrations/setup and AFTER E2E users are created (see e2e/auth.setup.ts).
+--
+-- Fixed E2E accounts (created by Playwright global setup when SUPABASE_SERVICE_ROLE_KEY is set):
+--   e2e-user1@strideup.test       — primary authenticated user
+--   e2e-user2@strideup.test       — second user (invite/chat specs)
+--   e2e-inactive@strideup.test    — deactivated (is_active = false)
+--
+-- Promote an admin:
+--   UPDATE public.profiles SET role = 'admin' WHERE user_id = '<uuid>';
 -- =============================================================================
 
--- Example: UPDATE profiles SET role = 'admin' WHERE user_id = 'USER_ID_1';
-
+-- Example challenge seed (uncomment and replace USER_ID after users exist):
 -- INSERT INTO public.challenges (name, description, start_date, end_date, step_goal, created_by, status)
 -- VALUES (
 --   'September Step Challenge',
@@ -17,6 +23,3 @@
 --   'USER_ID_1',
 --   'active'
 -- );
-
--- Historical daily activity and challenge data should be inserted after users exist.
--- Use the app import feature or admin panel for realistic seed data in development.

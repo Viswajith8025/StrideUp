@@ -1,0 +1,11 @@
+[functions.send-push]
+verify_jwt = false
+
+[functions.daily-nudge]
+verify_jwt = false
+
+[functions.notify-chat-message]
+verify_jwt = false
+
+[functions.notify-cheer]
+verify_jwt = false

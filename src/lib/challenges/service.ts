@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Challenge, ChallengeMember, LeaderboardEntry } from "@/types/database";
+import type { Challenge, LeaderboardEntry, ChallengeActivityEvent } from "@/types/database";
 
 export async function getChallenges(supabase: SupabaseClient, userId: string) {
   const { data: memberships } = await supabase
@@ -72,6 +72,13 @@ export async function joinChallenge(supabase: SupabaseClient, userId: string, ch
       .from("chat_members")
       .upsert({ room_id: roomId, user_id: userId }, { onConflict: "room_id,user_id" });
   }
+
+  const { error: backfillError } = await supabase.rpc("backfill_challenge_steps", {
+    p_challenge_id: challengeId,
+  });
+  if (backfillError) {
+    console.error("backfill_challenge_steps failed:", backfillError);
+  }
 }
 
 export async function leaveChallenge(supabase: SupabaseClient, userId: string, challengeId: string) {
@@ -96,6 +103,21 @@ export async function getMemberCount(supabase: SupabaseClient, challengeId: stri
   return count ?? 0;
 }
 
+export async function getChallengeActivity(
+  supabase: SupabaseClient,
+  challengeId: string,
+  limit = 30
+) {
+  const { data, error } = await supabase
+    .from("challenge_activity")
+    .select("*")
+    .eq("challenge_id", challengeId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []) as ChallengeActivityEvent[];
+}
+
 export async function getChallengeByToken(supabase: SupabaseClient, token: string) {
   const { data, error } = await supabase
     .from("challenges")
@@ -104,16 +126,4 @@ export async function getChallengeByToken(supabase: SupabaseClient, token: strin
     .single();
   if (error) throw error;
   return data as Challenge;
-}
-
-export async function syncChallengeSteps(
-  supabase: SupabaseClient,
-  userId: string,
-  challengeId: string,
-  date: string,
-  steps: number
-) {
-  await supabase
-    .from("challenge_daily_steps")
-    .upsert({ challenge_id: challengeId, user_id: userId, date, steps }, { onConflict: "challenge_id,user_id,date" });
 }

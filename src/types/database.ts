@@ -21,6 +21,8 @@ export interface Profile {
   stride_length_cm: number | null;
   daily_step_goal: number;
   role: UserRole;
+  timezone: string;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -107,6 +109,9 @@ export interface Notification {
   body: string;
   type: string;
   read: boolean;
+  category: string | null;
+  local_date: string | null;
+  url: string | null;
   created_at: string;
 }
 
@@ -125,6 +130,10 @@ export interface AppSettings {
   chat_notifications: boolean;
   streak_notifications: boolean;
   step_counter_setup_complete: boolean;
+  push_daily_goal: boolean;
+  push_streak: boolean;
+  push_challenge: boolean;
+  push_chat: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -136,6 +145,32 @@ export interface LeaderboardEntry {
   avatar_url: string | null;
   total_steps: number;
   rank: number;
+}
+
+export type ChallengeActivityType = "join" | "goal_hit" | "cheer";
+
+export interface ChallengeActivityEvent {
+  challenge_id: string;
+  event_type: ChallengeActivityType;
+  actor_user_id: string;
+  target_user_id: string | null;
+  actor_name: string | null;
+  actor_avatar: string | null;
+  target_name: string | null;
+  target_avatar: string | null;
+  emoji: string | null;
+  created_at: string;
+}
+
+export interface PushSubscription {
+  id: string;
+  user_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  user_agent: string | null;
+  created_at: string;
+  last_seen_at: string;
 }
 
 export interface PeriodStats {
