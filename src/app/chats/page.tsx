@@ -7,7 +7,8 @@ import { Card } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { formatTimeAgo } from "@/utils/date";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Sparkles } from "lucide-react";
+import { PARTNER_NAME, PARTNER_TAGLINE } from "@/lib/partner/constants";
 
 interface ChatRoomItem {
   id: string;
@@ -72,6 +73,18 @@ export default function ChatsPage() {
       <header className="py-4">
         <h1 className="text-2xl font-bold">Chats</h1>
       </header>
+
+      <Link href="/partner" className="block mb-4">
+        <Card className="flex items-center gap-3 border border-accent/25 bg-accent/5 hover:bg-accent/10 transition-colors">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/20">
+            <Sparkles className="text-accent" size={20} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-medium">{PARTNER_NAME}</div>
+            <p className="text-muted text-sm truncate">{PARTNER_TAGLINE} — chat anytime</p>
+          </div>
+        </Card>
+      </Link>
 
       {loading && <p className="text-muted">Loading…</p>}
 

@@ -10,6 +10,7 @@ Mobile-first step tracking and fitness challenge PWA. **P1–P8 complete** on th
 | `/home` | User | Dashboard (server-rendered) |
 | `/challenges`, `/challenges/[id]` | User | Challenges and leaderboard |
 | `/invite/[token]` | Public | Challenge invite join |
+| `/partner` | User | AI walking buddy chat (Groq) |
 | `/chats`, `/chats/[roomId]` | User | Realtime challenge chat |
 | `/results` | User | Statistics |
 | `/notifications` | User | In-app notification center |

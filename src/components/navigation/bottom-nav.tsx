@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Trophy, MessageCircle, BarChart3 } from "lucide-react";
+import { Home, Trophy, MessageCircle, BarChart3, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/home", label: "Home", icon: Home },
   { href: "/challenges", label: "Challenges", icon: Trophy },
+  { href: "/partner", label: "Buddy", icon: Sparkles },
   { href: "/chats", label: "Chats", icon: MessageCircle, badge: true },
   { href: "/results", label: "Results", icon: BarChart3 },
 ];

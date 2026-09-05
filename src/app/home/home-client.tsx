@@ -12,6 +12,7 @@ import { StreakBadge } from "@/components/dashboard/streak-badge";
 import { StatsRow } from "@/components/dashboard/stats-cards";
 import { PeriodToggle } from "@/components/dashboard/period-toggle";
 import { ChartPlaceholder } from "@/components/charts/chart-placeholder";
+import { PartnerCheerCard } from "@/components/partner/cheer-card";
 import { LeaderboardPreview } from "@/components/leaderboard/leaderboard-preview";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -275,6 +276,16 @@ export function HomeClient({ initialData }: HomeClientProps) {
           />
         )}
       </section>
+
+      {period === "D" && isToday && (
+        <PartnerCheerCard
+          userId={userId}
+          displayName={profile.display_name ?? "friend"}
+          steps={steps}
+          goal={goal}
+          streakDays={streakStats.currentStreak}
+        />
+      )}
 
       <section className="mb-6">
         <StatsRow
