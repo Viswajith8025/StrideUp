@@ -290,7 +290,6 @@ CREATE POLICY challenges_delete ON public.challenges FOR DELETE USING (created_b
 DROP POLICY IF EXISTS challenge_members_select ON public.challenge_members;
 CREATE POLICY challenge_members_select ON public.challenge_members FOR SELECT USING (
   user_id = auth.uid()
-  OR EXISTS (SELECT 1 FROM public.challenge_members cm WHERE cm.challenge_id = challenge_id AND cm.user_id = auth.uid())
   OR public.is_admin()
 );
 DROP POLICY IF EXISTS challenge_members_insert ON public.challenge_members;
@@ -320,7 +319,6 @@ CREATE POLICY chat_rooms_insert ON public.chat_rooms FOR INSERT WITH CHECK (
 DROP POLICY IF EXISTS chat_members_select ON public.chat_members;
 CREATE POLICY chat_members_select ON public.chat_members FOR SELECT USING (
   user_id = auth.uid()
-  OR EXISTS (SELECT 1 FROM public.chat_members cm WHERE cm.room_id = room_id AND cm.user_id = auth.uid())
 );
 DROP POLICY IF EXISTS chat_members_insert ON public.chat_members;
 CREATE POLICY chat_members_insert ON public.chat_members FOR INSERT WITH CHECK (user_id = auth.uid());
