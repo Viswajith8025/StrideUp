@@ -10,7 +10,11 @@ export async function syncProfileTimezone(
 ): Promise<string> {
   const deviceTz = getDeviceTimezone();
   if (deviceTz !== storedTimezone) {
-    await supabase.from("profiles").update({ timezone: deviceTz }).eq("user_id", userId);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ timezone: deviceTz })
+      .eq("user_id", userId);
+    if (error) throw error;
   }
   return deviceTz;
 }
