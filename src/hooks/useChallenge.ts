@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { getChallenges } from "@/lib/challenges/service";
 import type { Challenge } from "@/types/database";
@@ -11,7 +11,7 @@ export function useChallenge() {
   const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -24,11 +24,13 @@ export function useChallenge() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase]);
 
   useEffect(() => {
-    refresh();
-  }, []);
+    queueMicrotask(() => {
+      void refresh();
+    });
+  }, [refresh]);
 
   const active = challenges.filter((c) => c.status === "active");
   const upcoming = challenges.filter((c) => c.status === "upcoming");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
@@ -8,25 +8,48 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { PageLoader } from "@/components/ui/skeleton";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ChallengeActivityFeed } from "@/components/challenges/activity-feed";
+import { CheerControl } from "@/components/leaderboard/cheer-control";
+import { useToast } from "@/components/ui/toast";
 import { createClient } from "@/lib/supabase/client";
-import { getChallenge, getLeaderboard, joinChallenge, leaveChallenge, getMemberCount } from "@/lib/challenges/service";
+import {
+  getChallenge,
+  getLeaderboard,
+  getChallengeActivity,
+  joinChallenge,
+  leaveChallenge,
+  getMemberCount,
+} from "@/lib/challenges/service";
+import { sendCheer } from "@/lib/cheers/service";
 import { useAuth } from "@/hooks/useAuth";
-import { formatDisplayDate, remainingDays } from "@/utils/date";
+import { formatDisplayDate, remainingDays, toLocalDateString } from "@/utils/date";
 import { formatSteps } from "@/utils/formatting";
-import type { Challenge, LeaderboardEntry } from "@/types/database";
+import type { Challenge, LeaderboardEntry, ChallengeActivityEvent } from "@/types/database";
+import type { CheerEmoji } from "@/lib/cheers/constants";
 import { ArrowLeft, Share2 } from "lucide-react";
 
 export default function ChallengeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [activity, setActivity] = useState<ChallengeActivityEvent[]>([]);
   const [memberCount, setMemberCount] = useState(0);
   const [isMember, setIsMember] = useState(false);
   const [chatRoomId, setChatRoomId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const supabase = createClient();
+
+  const refreshActivity = useCallback(async () => {
+    if (!id) return;
+    const events = await getChallengeActivity(supabase, id);
+    setActivity(events);
+  }, [id, supabase]);
 
   useEffect(() => {
     const load = async () => {
@@ -37,16 +60,26 @@ export default function ChallengeDetailPage() {
       setLeaderboard(lb);
       const count = await getMemberCount(supabase, id);
       setMemberCount(count);
+      await refreshActivity();
       if (user) {
-        const { data } = await supabase.from("challenge_members").select("id").eq("challenge_id", id).eq("user_id", user.id).maybeSingle();
+        const { data } = await supabase
+          .from("challenge_members")
+          .select("id")
+          .eq("challenge_id", id)
+          .eq("user_id", user.id)
+          .maybeSingle();
         setIsMember(!!data);
       }
-      const { data: room } = await supabase.from("chat_rooms").select("id").eq("challenge_id", id).maybeSingle();
+      const { data: room } = await supabase
+        .from("chat_rooms")
+        .select("id")
+        .eq("challenge_id", id)
+        .maybeSingle();
       setChatRoomId(room?.id ?? null);
       setLoading(false);
     };
     load();
-  }, [id, user, supabase]);
+  }, [id, user, supabase, refreshActivity]);
 
   const handleJoin = async () => {
     if (!user || !id) return;
@@ -54,12 +87,19 @@ export default function ChallengeDetailPage() {
     setIsMember(true);
     const lb = await getLeaderboard(supabase, id);
     setLeaderboard(lb);
+    await refreshActivity();
   };
 
   const handleLeave = async () => {
     if (!user || !id) return;
-    await leaveChallenge(supabase, user.id, id);
-    router.push("/challenges");
+    setLeaving(true);
+    try {
+      await leaveChallenge(supabase, user.id, id);
+      router.push("/challenges");
+    } finally {
+      setLeaving(false);
+      setShowLeaveConfirm(false);
+    }
   };
 
   const shareInvite = async () => {
@@ -69,8 +109,20 @@ export default function ChallengeDetailPage() {
       await navigator.share({ title: challenge.name, url });
     } else {
       await navigator.clipboard.writeText(url);
-      alert("Invite link copied!");
+      toast("Invite link copied!", "success");
     }
+  };
+
+  const handleCheer = async (toUserId: string, emoji: CheerEmoji) => {
+    if (!user || !id) return;
+    await sendCheer(supabase, {
+      challengeId: id,
+      fromUserId: user.id,
+      toUserId,
+      emoji,
+      date: toLocalDateString(),
+    });
+    await refreshActivity();
   };
 
   const myEntry = leaderboard.find((e) => e.user_id === user?.id);
@@ -104,7 +156,9 @@ export default function ChallengeDetailPage() {
       {!isMember ? (
         <Button className="w-full mb-4" onClick={handleJoin}>Join Challenge</Button>
       ) : (
-        <Button variant="outline" className="w-full mb-4" onClick={handleLeave}>Leave Challenge</Button>
+        <Button variant="outline" className="w-full mb-4" onClick={() => setShowLeaveConfirm(true)}>
+          Leave Challenge
+        </Button>
       )}
 
       <h2 className="text-sm text-muted mb-3">Leaderboard</h2>
@@ -113,11 +167,22 @@ export default function ChallengeDetailPage() {
           <div key={entry.user_id} className="flex items-center gap-3">
             <span className="text-muted w-6 font-medium" data-testid="leaderboard-rank">#{entry.rank}</span>
             <Avatar name={entry.display_name} src={entry.avatar_url} size="sm" />
-            <span className="flex-1 font-medium">{entry.display_name}</span>
+            <span className="flex-1 font-medium truncate">{entry.display_name}</span>
+            {isMember && user && entry.user_id !== user.id && (
+              <CheerControl
+                onCheer={(emoji) => handleCheer(entry.user_id, emoji)}
+                disabled={!isMember}
+              />
+            )}
             <span className="font-bold tabular-nums">{formatSteps(entry.total_steps)}</span>
           </div>
         ))}
         {leaderboard.length === 0 && <p className="text-muted text-sm text-center py-4">No participants yet</p>}
+      </Card>
+
+      <h2 className="text-sm text-muted mb-3">Activity</h2>
+      <Card className="mb-6">
+        <ChallengeActivityFeed events={activity} />
       </Card>
 
       {chatRoomId ? (
@@ -125,6 +190,17 @@ export default function ChallengeDetailPage() {
       ) : (
         <p className="text-muted text-sm">Chat room will be available after joining</p>
       )}
+
+      <ConfirmDialog
+        open={showLeaveConfirm}
+        title="Leave challenge?"
+        description="You will lose your place on the leaderboard and stop receiving challenge updates."
+        confirmLabel="Leave"
+        destructive
+        loading={leaving}
+        onConfirm={handleLeave}
+        onClose={() => setShowLeaveConfirm(false)}
+      />
     </AppShell>
   );
 }

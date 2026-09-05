@@ -222,7 +222,6 @@ export function AdminClient({ data }: AdminClientProps) {
         page={data.users.page}
         total={data.users.total}
         pageSize={data.users.pageSize}
-        paramKey="up"
         onChange={(page) => pushParams({ up: String(page) })}
       />
 
@@ -278,7 +277,6 @@ export function AdminClient({ data }: AdminClientProps) {
         page={data.challenges.page}
         total={data.challenges.total}
         pageSize={data.challenges.pageSize}
-        paramKey="cp"
         onChange={(page) => pushParams({ cp: String(page) })}
       />
 
@@ -311,13 +309,11 @@ function Pagination({
   page,
   total,
   pageSize,
-  paramKey,
   onChange,
 }: {
   page: number;
   total: number;
   pageSize: number;
-  paramKey: string;
   onChange: (page: number) => void;
 }) {
   const pages = Math.max(1, Math.ceil(total / pageSize));

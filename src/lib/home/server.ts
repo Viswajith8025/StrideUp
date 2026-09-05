@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { DailyActivity, LeaderboardEntry, Profile } from "@/types/database";
+import type { LeaderboardEntry, Profile } from "@/types/database";
 import { getChallenges, getLeaderboard } from "@/lib/challenges/service";
 import { getActivityRange, getDailyActivity } from "@/lib/steps/service";
 import {

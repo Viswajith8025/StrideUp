@@ -344,7 +344,21 @@ CREATE POLICY notifications_all ON public.notifications FOR ALL USING (user_id =
 DROP POLICY IF EXISTS app_settings_all ON public.app_settings;
 CREATE POLICY app_settings_all ON public.app_settings FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 
--- Realtime
-ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
+-- Realtime (idempotent on re-run)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_publication_rel pr
+    JOIN pg_class c ON c.oid = pr.prrelid
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    JOIN pg_publication p ON p.oid = pr.prpubid
+    WHERE p.pubname = 'supabase_realtime'
+      AND n.nspname = 'public'
+      AND c.relname = 'messages'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
+  END IF;
+END $$;
 
 -- =============================================================================

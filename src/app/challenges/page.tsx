@@ -45,10 +45,11 @@ export default function ChallengesPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ name: "", description: "", start_date: "", end_date: "", step_goal: "10000" });
   const [createError, setCreateError] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
   const supabase = createClient();
 
   const handleCreate = async () => {
-    if (!user) return;
+    if (!user || creating) return;
     const input = {
       name: form.name,
       description: form.description || undefined,
@@ -61,9 +62,18 @@ export default function ChallengesPage() {
       setCreateError(parsed.error.issues[0]?.message ?? "Invalid");
       return;
     }
-    await createChallenge(supabase, user.id, parsed.data);
-    setShowCreate(false);
-    refresh();
+    setCreating(true);
+    setCreateError(null);
+    try {
+      await createChallenge(supabase, user.id, parsed.data);
+      setShowCreate(false);
+      setForm({ name: "", description: "", start_date: "", end_date: "", step_goal: "10000" });
+      refresh();
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : "Failed to create challenge");
+    } finally {
+      setCreating(false);
+    }
   };
 
   return (
@@ -118,7 +128,9 @@ export default function ChallengesPage() {
               <Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
               <Input type="number" placeholder="Step goal" value={form.step_goal} onChange={(e) => setForm({ ...form, step_goal: e.target.value })} />
               {createError && <p className="text-red-400 text-sm">{createError}</p>}
-              <Button className="w-full" onClick={handleCreate}>Create</Button>
+              <Button className="w-full" onClick={handleCreate} disabled={creating}>
+                {creating ? "Creating…" : "Create"}
+              </Button>
             </div>
           </div>
         </div>

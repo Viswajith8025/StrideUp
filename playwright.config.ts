@@ -19,15 +19,21 @@ export default defineConfig({
   projects: [
     { name: "setup", testMatch: /auth\.setup\.ts/ },
     {
+      name: "blocked",
+      dependencies: ["setup"],
+      testMatch: /blocked\.spec\.ts/,
+      use: { ...devices["iPhone 13"], storageState: inactiveAuthFile },
+    },
+    {
       name: "mobile",
       dependencies: ["setup"],
-      testIgnore: [/auth\.setup\.ts/, /fcp\.spec\.ts/],
+      testIgnore: [/auth\.setup\.ts/, /fcp\.spec\.ts/, /blocked\.spec\.ts/],
       use: { ...devices["iPhone 13"], storageState: authFile },
     },
     {
       name: "desktop",
       dependencies: ["setup"],
-      testIgnore: [/auth\.setup\.ts/, /fcp\.spec\.ts/],
+      testIgnore: [/auth\.setup\.ts/, /fcp\.spec\.ts/, /blocked\.spec\.ts/],
       use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 720 } },
     },
     {

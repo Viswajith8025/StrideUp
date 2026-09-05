@@ -63,6 +63,18 @@ export interface Challenge {
   updated_at: string;
 }
 
+/** Limited fields returned by get_challenge_by_invite_token RPC */
+export interface ChallengeInvitePreview {
+  id: string;
+  name: string;
+  description: string | null;
+  start_date: string;
+  end_date: string;
+  step_goal: number;
+  status: ChallengeStatus;
+  member_count: number;
+}
+
 export interface ChallengeMember {
   id: string;
   challenge_id: string;

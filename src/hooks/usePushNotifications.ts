@@ -42,8 +42,7 @@ export function usePushNotifications(userId: string | undefined) {
       const row = subscriptionToRow(userId, existing);
       await supabase.from("push_subscriptions").upsert(row, { onConflict: "endpoint" });
       setSubscribed(true);
-    } catch (error) {
-      console.error("Failed to sync push subscription:", error);
+    } catch {
       setSubscribed(false);
     } finally {
       setLoading(false);
@@ -51,11 +50,9 @@ export function usePushNotifications(userId: string | undefined) {
   }, [userId, support.supported, supabase]);
 
   useEffect(() => {
-    refreshSupport();
-  }, [refreshSupport]);
-
-  useEffect(() => {
-    syncSubscriptionState();
+    queueMicrotask(() => {
+      void syncSubscriptionState();
+    });
   }, [syncSubscriptionState]);
 
   const subscribe = useCallback(async (): Promise<PushPermissionState> => {

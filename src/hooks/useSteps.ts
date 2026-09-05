@@ -16,7 +16,9 @@ export interface UseStepsOptions {
 export function useSteps(profile: Profile | null, options: UseStepsOptions = {}) {
   const { onStepsSynced } = options;
   const [syncing, setSyncing] = useState(false);
-  const [motionAvailable, setMotionAvailable] = useState(false);
+  const [motionAvailable] = useState(
+    () => typeof window !== "undefined" && "DeviceMotionEvent" in window
+  );
   const [pendingSteps, setPendingSteps] = useState(0);
   const motionRef = useRef<BrowserMotionProvider | null>(null);
   const supabase = createClient();
@@ -24,7 +26,6 @@ export function useSteps(profile: Profile | null, options: UseStepsOptions = {})
   useEffect(() => {
     const motion = new BrowserMotionProvider();
     motionRef.current = motion;
-    setMotionAvailable(motion.isAvailable());
     return () => motion.stop();
   }, []);
 
@@ -42,8 +43,7 @@ export function useSteps(profile: Profile | null, options: UseStepsOptions = {})
       await recordStepEvent(supabase, profile.user_id, count, source);
       await refreshPending();
       await onStepsSynced?.();
-    } catch (e) {
-      console.error("Failed to sync steps:", e);
+    } catch {
       await queueActivityUpdate({
         userId: profile.user_id,
         date: toLocalDateString(),
@@ -63,7 +63,7 @@ export function useSteps(profile: Profile | null, options: UseStepsOptions = {})
 
     motion.onSteps((steps) => flushSteps(steps, "motion"));
     if (motion.isAvailable()) {
-      motion.start().catch(console.error);
+      motion.start().catch(() => undefined);
     }
     return () => motion.stop();
   }, [profile, flushSteps]);

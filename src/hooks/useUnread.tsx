@@ -44,8 +44,12 @@ export function UnreadProvider({ children }: { children: React.ReactNode }) {
   }, [user, supabase]);
 
   useEffect(() => {
-    refresh();
-    const interval = setInterval(refresh, 30000);
+    queueMicrotask(() => {
+      void refresh();
+    });
+    const interval = setInterval(() => {
+      void refresh();
+    }, 30000);
     return () => clearInterval(interval);
   }, [refresh]);
 

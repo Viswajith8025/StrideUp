@@ -3,7 +3,6 @@
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { formatSteps } from "@/utils/formatting";
-import { formatTimeAgo } from "@/utils/date";
 import type { LeaderboardEntry } from "@/types/database";
 import { Plus, UserPlus } from "lucide-react";
 import Link from "next/link";

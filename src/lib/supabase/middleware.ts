@@ -51,7 +51,7 @@ export async function updateSession(request: NextRequest) {
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("is_active")
+      .select("is_active, role")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -64,6 +64,12 @@ export async function updateSession(request: NextRequest) {
     }
 
     if (isActive && pathname === BLOCKED_ROUTE) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/home";
+      return NextResponse.redirect(url);
+    }
+
+    if (pathname.startsWith("/admin") && profile?.role !== "admin") {
       const url = request.nextUrl.clone();
       url.pathname = "/home";
       return NextResponse.redirect(url);

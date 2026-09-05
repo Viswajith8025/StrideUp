@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Challenge, LeaderboardEntry, ChallengeActivityEvent } from "@/types/database";
+import type { Challenge, LeaderboardEntry, ChallengeActivityEvent, ChallengeInvitePreview } from "@/types/database";
 
 export async function getChallenges(supabase: SupabaseClient, userId: string) {
   const { data: memberships } = await supabase
@@ -45,11 +45,30 @@ export async function createChallenge(
   return data as Challenge;
 }
 
-export async function joinChallenge(supabase: SupabaseClient, userId: string, challengeId: string) {
-  const { error: memberError } = await supabase
-    .from("challenge_members")
-    .upsert({ challenge_id: challengeId, user_id: userId }, { onConflict: "challenge_id,user_id" });
-  if (memberError) throw memberError;
+export async function joinChallenge(
+  supabase: SupabaseClient,
+  userId: string,
+  challengeId: string,
+  inviteToken?: string
+) {
+  const { data: challenge } = await supabase
+    .from("challenges")
+    .select("created_by")
+    .eq("id", challengeId)
+    .maybeSingle();
+
+  if (challenge?.created_by === userId) {
+    const { error: memberError } = await supabase
+      .from("challenge_members")
+      .upsert({ challenge_id: challengeId, user_id: userId }, { onConflict: "challenge_id,user_id" });
+    if (memberError) throw memberError;
+  } else {
+    const { error: joinError } = await supabase.rpc("join_challenge_with_invite", {
+      p_challenge_id: challengeId,
+      p_invite_token: inviteToken ?? null,
+    });
+    if (joinError) throw joinError;
+  }
 
   const { data: room } = await supabase
     .from("chat_rooms")
@@ -76,9 +95,7 @@ export async function joinChallenge(supabase: SupabaseClient, userId: string, ch
   const { error: backfillError } = await supabase.rpc("backfill_challenge_steps", {
     p_challenge_id: challengeId,
   });
-  if (backfillError) {
-    console.error("backfill_challenge_steps failed:", backfillError);
-  }
+  if (backfillError) throw backfillError;
 }
 
 export async function leaveChallenge(supabase: SupabaseClient, userId: string, challengeId: string) {
@@ -119,11 +136,11 @@ export async function getChallengeActivity(
 }
 
 export async function getChallengeByToken(supabase: SupabaseClient, token: string) {
-  const { data, error } = await supabase
-    .from("challenges")
-    .select("*")
-    .eq("invite_token", token)
-    .single();
+  const { data, error } = await supabase.rpc("get_challenge_by_invite_token", {
+    p_token: token,
+  });
   if (error) throw error;
-  return data as Challenge;
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) throw new Error("Challenge not found");
+  return row as ChallengeInvitePreview;
 }

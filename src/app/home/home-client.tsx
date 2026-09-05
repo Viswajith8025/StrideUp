@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { MoreVertical, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import useSWR from "swr";
@@ -83,18 +83,18 @@ export function HomeClient({ initialData }: HomeClientProps) {
   const [manualSteps, setManualSteps] = useState("");
   const [rangeError, setRangeError] = useState<string | null>(null);
 
-  const sessionCache = useRef(
-    new Map(periodRanges.map((range) => [range.key, range.activities]))
+  const [sessionCache, setSessionCache] = useState(
+    () => new Map(periodRanges.map((range) => [range.key, range.activities]))
   );
 
   const range = resolveActivityRange(period, selectedDate, weekStartsOn);
-  const cachedActivities = sessionCache.current.get(range.key);
+  const cachedActivities = sessionCache.get(range.key);
 
   const { data: activities, mutate: mutateActivities } = useSWR(
     homeActivityKey(userId, range.start, range.end),
     async () => {
       const data = await getActivityRange(supabase, userId, range.start, range.end);
-      sessionCache.current.set(range.key, data);
+      setSessionCache((prev) => new Map(prev).set(range.key, data));
       return data;
     },
     {
@@ -109,7 +109,7 @@ export function HomeClient({ initialData }: HomeClientProps) {
   const revalidateCurrentRange = useCallback(async () => {
     setRangeError(null);
     const fresh = await getActivityRange(supabase, userId, range.start, range.end);
-    sessionCache.current.set(range.key, fresh);
+    setSessionCache((prev) => new Map(prev).set(range.key, fresh));
     await mutateActivities(fresh, { revalidate: false });
     return fresh;
   }, [supabase, userId, range.start, range.end, range.key, mutateActivities]);
@@ -122,7 +122,7 @@ export function HomeClient({ initialData }: HomeClientProps) {
   });
 
   const isToday = selectedDate === today;
-  const activityList = activities ?? [];
+  const activityList = useMemo(() => activities ?? [], [activities]);
 
   const todayActivity = useMemo(() => {
     if (period === "D" && selectedDate === today) {

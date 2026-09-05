@@ -40,7 +40,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [supabase]);
 
   useEffect(() => {
-    refreshSettings();
+    queueMicrotask(() => {
+      void refreshSettings();
+    });
   }, [refreshSettings]);
 
   const theme = settings?.theme ?? "dark";

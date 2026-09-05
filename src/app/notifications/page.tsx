@@ -8,7 +8,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNotifications } from "@/hooks/useNotifications";
-import { getCategoryIcon } from "@/lib/notifications/icons";
+import { CategoryIcon } from "@/lib/notifications/icons";
 import { inferUrlFromNotification } from "@/lib/notifications/service";
 import type { Notification } from "@/types/database";
 import { formatTimeAgo, toLocalDateString } from "@/utils/date";
@@ -35,8 +35,6 @@ function NotificationRow({
   item: Notification;
   onOpen: (item: Notification) => void;
 }) {
-  const Icon = getCategoryIcon(item.category);
-
   return (
     <button
       type="button"
@@ -45,7 +43,7 @@ function NotificationRow({
       className="w-full text-left flex gap-3 py-4 border-b border-border min-h-[72px]"
     >
       <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-card">
-        <Icon size={18} className="text-accent" />
+        <CategoryIcon category={item.category} size={18} className="text-accent" />
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">

@@ -25,9 +25,10 @@ import { googleFitProvider } from "@/lib/import-export/providers";
 
 const accentKeys = Object.keys(ACCENT_COLORS) as AccentColor[];
 
-function SettingsRow({ icon: Icon, label, href, onClick, iconClass, showChevron = true }: {
+function SettingsRow({ icon: Icon, label, subtitle, href, onClick, iconClass, showChevron = true }: {
   icon: React.ElementType;
   label: string;
+  subtitle?: string;
   href?: string;
   onClick?: () => void;
   iconClass?: string;
@@ -36,7 +37,10 @@ function SettingsRow({ icon: Icon, label, href, onClick, iconClass, showChevron 
   const content = (
     <div className="flex items-center gap-4 py-3.5">
       <Icon size={22} className={iconClass ?? "text-accent"} />
-      <span className="text-base flex-1">{label}</span>
+      <div className="flex-1">
+        <span className="text-base block">{label}</span>
+        {subtitle && <span className="text-xs text-muted">{subtitle}</span>}
+      </div>
       {showChevron && (href || onClick) && <ChevronRight size={18} className="text-muted" />}
     </div>
   );
@@ -188,7 +192,9 @@ export default function SettingsPage() {
         <SettingsRow
           icon={Heart}
           label="Import from Google Fit"
+          subtitle="Coming soon"
           iconClass="text-green-500"
+          showChevron={false}
           onClick={() => toast(googleFitProvider.description, "info")}
         />
         <SettingsRow icon={Download} label="Import Data" onClick={() => document.getElementById("import-file")?.click()} />
@@ -202,7 +208,7 @@ export default function SettingsPage() {
         <SettingsRow icon={Gift} label="What's New" onClick={() => toast(`${APP_NAME} v${APP_VERSION} — ${APP_TAGLINE}`, "info")} />
         <SettingsRow icon={HelpCircle} label="Support" href="/support" />
         <SettingsRow icon={Mail} label="Contact Us" onClick={() => window.open(`mailto:${BRAND.contactEmail}`, "_blank")} />
-        <SettingsRow icon={Star} label="Rate App" onClick={() => toast("Thank you for your feedback!", "success")} />
+        <SettingsRow icon={Star} label="Rate App" subtitle="Coming soon" showChevron={false} onClick={() => toast("Thank you for your feedback!", "success")} />
         <SettingsRow icon={Share2} label="Share this App" onClick={shareApp} />
         <SettingsRow icon={Shield} label="Privacy Policy" href="/privacy" />
         <SettingsRow icon={FileText} label="Terms of Service" href="/terms" />

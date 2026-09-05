@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
@@ -9,32 +9,34 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/toast";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/hooks/useAuth";
+import type { AppSettings } from "@/types/database";
 import { createClient } from "@/lib/supabase/client";
 
-export default function NotificationsSettingsPage() {
-  const { settings } = useTheme();
-  const { user } = useAuth();
+type NotificationPrefs = Pick<
+  AppSettings,
+  | "notifications_enabled"
+  | "daily_goal_notifications"
+  | "challenge_notifications"
+  | "chat_notifications"
+  | "streak_notifications"
+>;
+
+function NotificationPrefsForm({
+  userId,
+  settings,
+}: {
+  userId: string;
+  settings: NotificationPrefs;
+}) {
   const { toast } = useToast();
   const [prefs, setPrefs] = useState({
-    notifications_enabled: false,
-    daily_goal_notifications: true,
-    challenge_notifications: true,
-    chat_notifications: true,
-    streak_notifications: true,
+    notifications_enabled: settings.notifications_enabled,
+    daily_goal_notifications: settings.daily_goal_notifications,
+    challenge_notifications: settings.challenge_notifications,
+    chat_notifications: settings.chat_notifications,
+    streak_notifications: settings.streak_notifications,
   });
   const supabase = createClient();
-
-  useEffect(() => {
-    if (settings) {
-      setPrefs({
-        notifications_enabled: settings.notifications_enabled,
-        daily_goal_notifications: settings.daily_goal_notifications,
-        challenge_notifications: settings.challenge_notifications,
-        chat_notifications: settings.chat_notifications,
-        streak_notifications: settings.streak_notifications,
-      });
-    }
-  }, [settings]);
 
   const toggle = (key: keyof typeof prefs) => {
     setPrefs((p) => ({ ...p, [key]: !p[key] }));
@@ -51,8 +53,7 @@ export default function NotificationsSettingsPage() {
   };
 
   const handleSave = async () => {
-    if (!user) return;
-    await supabase.from("app_settings").update(prefs).eq("user_id", user.id);
+    await supabase.from("app_settings").update(prefs).eq("user_id", userId);
     toast("Preferences saved", "success");
   };
 
@@ -64,12 +65,7 @@ export default function NotificationsSettingsPage() {
   ];
 
   return (
-    <AppShell showNav={false}>
-      <header className="flex items-center gap-3 py-4">
-        <Link href="/settings"><ArrowLeft size={24} /></Link>
-        <h1 className="text-xl font-bold">Notifications</h1>
-      </header>
-
+    <>
       {!prefs.notifications_enabled && (
         <div className="rounded-2xl bg-card p-4 mb-6">
           <p className="text-sm text-muted mb-3">Enable notifications to receive reminders and updates.</p>
@@ -86,6 +82,22 @@ export default function NotificationsSettingsPage() {
         ))}
       </div>
       <Button className="w-full mt-6" onClick={handleSave}>Save</Button>
+    </>
+  );
+}
+
+export default function NotificationsSettingsPage() {
+  const { settings } = useTheme();
+  const { user } = useAuth();
+  if (!settings || !user) return null;
+
+  return (
+    <AppShell showNav={false}>
+      <header className="flex items-center gap-3 py-4">
+        <Link href="/settings"><ArrowLeft size={24} /></Link>
+        <h1 className="text-xl font-bold">Notifications</h1>
+      </header>
+      <NotificationPrefsForm key={settings.updated_at} userId={user.id} settings={settings} />
     </AppShell>
   );
 }

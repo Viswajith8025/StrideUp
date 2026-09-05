@@ -74,7 +74,6 @@ export default function ResultsPage() {
           const avgDaily = r.leaderboard.length
             ? Math.round(totalSteps / Math.max(1, r.leaderboard.length))
             : 0;
-          const bestDay = Math.max(...r.leaderboard.map((e) => e.total_steps), 0);
           const goalRate = r.step_goal > 0 && r.mySteps
             ? Math.min(100, (r.mySteps / r.step_goal) * 100)
             : 0;

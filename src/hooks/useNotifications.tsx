@@ -183,7 +183,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }, [supabase, user, applyReadAllLocally]);
 
   useEffect(() => {
-    refresh();
+    queueMicrotask(() => {
+      void refresh();
+    });
   }, [refresh]);
 
   useEffect(() => {

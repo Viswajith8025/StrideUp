@@ -60,7 +60,9 @@ export function useRealtimeChat(roomId: string | null) {
   }, [attachProfiles, roomId, supabase]);
 
   useEffect(() => {
-    fetchMessages();
+    queueMicrotask(() => {
+      void fetchMessages();
+    });
   }, [fetchMessages]);
 
   useEffect(() => {

@@ -8,12 +8,12 @@ import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { APP_NAME } from "@/lib/brand";
 import { PageLoader } from "@/components/ui/skeleton";
-import type { Challenge } from "@/types/database";
+import type { ChallengeInvitePreview } from "@/types/database";
 
 export default function InvitePage() {
   const { token } = useParams<{ token: string }>();
   const router = useRouter();
-  const [challenge, setChallenge] = useState<Challenge | null>(null);
+  const [challenge, setChallenge] = useState<ChallengeInvitePreview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
@@ -38,7 +38,7 @@ export default function InvitePage() {
       return;
     }
     if (!challenge) return;
-    await joinChallenge(supabase, user.id, challenge.id);
+    await joinChallenge(supabase, user.id, challenge.id, token);
     router.push(`/challenges/${challenge.id}`);
   };
 

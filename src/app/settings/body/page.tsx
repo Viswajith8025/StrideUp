@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
@@ -9,33 +9,48 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { createClient } from "@/lib/supabase/client";
 import { estimateStrideLength } from "@/lib/calculations";
+import type { Profile } from "@/types/database";
 
-export default function BodyMeasurementsPage() {
-  const { profile, refreshProfile } = useAuth();
-  const [weight, setWeight] = useState("");
-  const [height, setHeight] = useState("");
-  const [stride, setStride] = useState("");
+function BodyForm({ profile, onSaved }: { profile: Profile; onSaved: () => void }) {
+  const [weight, setWeight] = useState(profile.weight_kg?.toString() ?? "");
+  const [height, setHeight] = useState(profile.height_cm?.toString() ?? "");
+  const [stride, setStride] = useState(profile.stride_length_cm?.toString() ?? "");
   const supabase = createClient();
 
-  useEffect(() => {
-    if (profile) {
-      setWeight(profile.weight_kg?.toString() ?? "");
-      setHeight(profile.height_cm?.toString() ?? "");
-      setStride(profile.stride_length_cm?.toString() ?? "");
-    }
-  }, [profile]);
-
   const handleSave = async () => {
-    if (!profile) return;
     await supabase.from("profiles").update({
       weight_kg: weight ? parseFloat(weight) : null,
       height_cm: height ? parseFloat(height) : null,
       stride_length_cm: stride ? parseFloat(stride) : null,
     }).eq("user_id", profile.user_id);
-    refreshProfile();
+    onSaved();
   };
 
   const estimatedStride = height ? estimateStrideLength(parseFloat(height)).toFixed(1) : "—";
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="text-sm text-muted mb-1 block">Weight (kg)</label>
+        <Input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} />
+      </div>
+      <div>
+        <label className="text-sm text-muted mb-1 block">Height (cm)</label>
+        <Input type="number" value={height} onChange={(e) => setHeight(e.target.value)} />
+      </div>
+      <div>
+        <label className="text-sm text-muted mb-1 block">Stride length (cm)</label>
+        <Input type="number" value={stride} onChange={(e) => setStride(e.target.value)} />
+        <p className="text-muted text-xs mt-1">Estimated from height: {estimatedStride} cm</p>
+      </div>
+      <Button className="w-full" onClick={handleSave}>Save</Button>
+    </div>
+  );
+}
+
+export default function BodyMeasurementsPage() {
+  const { profile, refreshProfile } = useAuth();
+  if (!profile) return null;
 
   return (
     <AppShell showNav={false}>
@@ -43,22 +58,7 @@ export default function BodyMeasurementsPage() {
         <Link href="/settings"><ArrowLeft size={24} /></Link>
         <h1 className="text-xl font-bold">Body Measurements</h1>
       </header>
-      <p className="text-muted text-sm mb-6">Used for distance and calorie estimates. Not medical-grade.</p>
-      <div className="space-y-4">
-        <div>
-          <label className="text-sm text-muted mb-1 block">Weight (kg)</label>
-          <Input type="number" step="0.1" value={weight} onChange={(e) => setWeight(e.target.value)} />
-        </div>
-        <div>
-          <label className="text-sm text-muted mb-1 block">Height (cm)</label>
-          <Input type="number" step="0.1" value={height} onChange={(e) => setHeight(e.target.value)} />
-        </div>
-        <div>
-          <label className="text-sm text-muted mb-1 block">Stride length (cm)</label>
-          <Input type="number" step="0.1" value={stride} onChange={(e) => setStride(e.target.value)} placeholder={`Estimated: ${estimatedStride}`} />
-        </div>
-        <Button className="w-full" onClick={handleSave}>Save</Button>
-      </div>
+      <BodyForm key={profile.updated_at} profile={profile} onSaved={refreshProfile} />
     </AppShell>
   );
 }
