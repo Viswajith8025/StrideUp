@@ -4,7 +4,7 @@ import { AVATAR_BUCKET } from "./constants";
 /** SHA-256 hex digest (first 16 chars) used as the WebP filename. */
 export async function hashAvatarBlob(blob: Blob): Promise<string> {
   const buffer = await blob.arrayBuffer();
-  const digest = await crypto.subtle.digest("SHA-256", buffer);
+  const digest = await crypto.subtle.digest("SHA-256", new Uint8Array(buffer));
   return Array.from(new Uint8Array(digest))
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("")
