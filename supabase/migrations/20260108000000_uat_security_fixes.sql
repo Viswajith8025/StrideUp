@@ -2,6 +2,19 @@
 -- Migration: UAT security fixes (invite lookup, backfill auth, join policy)
 -- =============================================================================
 
+-- Ensure is_admin exists (remote DBs bootstrapped from older setup.sql may lack it)
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles WHERE user_id = auth.uid() AND role = 'admin'
+  );
+$$;
+
 -- F-02: Limited invite preview without opening challenges table to all users
 CREATE OR REPLACE FUNCTION public.get_challenge_by_invite_token(p_token text)
 RETURNS TABLE (
