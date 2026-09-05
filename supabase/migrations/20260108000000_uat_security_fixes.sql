@@ -11,7 +11,7 @@ RETURNS TABLE (
   start_date date,
   end_date date,
   step_goal integer,
-  status public.challenge_status,
+  status text,
   member_count bigint
 )
 LANGUAGE sql
